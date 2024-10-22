@@ -1,0 +1,83 @@
+Program -> DeclarationList $
+DeclarationList -> Declaration DeclarationList 
+DeclarationList ->  EPSILON
+Declaration -> #get_var_type DeclarationInitial DeclarationPrime
+DeclarationInitial -> TypeSpecifier #push_id ID #increase_param_cnt
+DeclarationPrime -> FunDeclarationPrime 
+DeclarationPrime ->  VarDeclarationPrime
+VarDeclarationPrime -> ; #define_var
+VarDeclarationPrime ->  [ #push_num NUM ] ; #define_arr
+FunDeclarationPrime -> #before_func_params ( Params #define_param_vars ) #create_function #make_return CompoundStmt #end_return #return_function
+TypeSpecifier -> int 
+TypeSpecifier ->  void
+Params -> int #push_id ID #increase_param_cnt ParamPrime ParamList 
+Params ->  void #param_type_void
+ParamList -> , Param ParamList 
+ParamList ->  EPSILON
+Param -> DeclarationInitial ParamPrime
+ParamPrime -> [ ] #param_type_arr
+ParamPrime ->  EPSILON #param_type_int
+CompoundStmt -> #push_scope { DeclarationList StatementList } #pop_scope
+StatementList -> Statement StatementList 
+StatementList ->  EPSILON
+Statement -> ExpressionStmt 
+Statement ->  CompoundStmt 
+Statement ->  SelectionStmt 
+Statement ->  IterationStmt 
+Statement ->  ReturnStmt
+ExpressionStmt -> Expression ; #ss_pop
+ExpressionStmt ->  break ; #break_loop
+ExpressionStmt ->  ;
+SelectionStmt -> if ( Expression ) #save Statement else #jpf_save Statement #jump
+IterationStmt -> while #label ( Expression ) #create_break #save Statement #whilee #fill_break
+ReturnStmt -> return ReturnStmtPrime #save_return_value
+ReturnStmtPrime -> #push_current_inst ; 
+ReturnStmtPrime ->  Expression ;
+Expression -> SimpleExpressionZegond 
+Expression -> #push_local_id_addr ID B
+B -> = Expression #assign
+B ->  [ Expression ] #arr_index H 
+B ->  SimpleExpressionPrime
+H -> = Expression #assign
+H ->  G D C
+SimpleExpressionZegond -> AdditiveExpressionZegond C
+SimpleExpressionPrime -> AdditiveExpressionPrime C
+C -> #push_op Relop AdditiveExpression #op_action
+C ->  EPSILON
+Relop -> < 
+Relop ->  ==
+AdditiveExpression -> Term D
+AdditiveExpressionPrime -> TermPrime D
+AdditiveExpressionZegond -> TermZegond D
+D -> #push_op Addop Term #op_action D
+D ->  EPSILON
+Addop -> +
+Addop -> -
+Term -> SignedFactor G
+TermPrime -> SignedFactorPrime G
+TermZegond -> SignedFactorZegond G
+G -> * SignedFactor #mult G 
+G ->  EPSILON
+SignedFactor -> + Factor 
+SignedFactor ->  - Factor #negate
+SignedFactor ->  Factor
+SignedFactorPrime -> FactorPrime
+SignedFactorZegond -> + Factor 
+SignedFactorZegond ->  - Factor #negate
+SignedFactorZegond ->  FactorZegond
+Factor -> ( Expression ) 
+Factor ->  #push_local_id_addr ID VarCallPrime 
+Factor ->  #push_num NUM
+VarCallPrime -> ( Args #output ) #function_call
+VarCallPrime ->  VarPrime
+VarPrime -> [ Expression ] #arr_index
+VarPrime ->  EPSILON
+FactorPrime -> ( Args #output ) #function_call
+FactorPrime ->  EPSILON
+FactorZegond -> ( Expression ) 
+FactorZegond ->  #push_num NUM
+Args -> ArgList 
+Args ->  EPSILON
+ArgList -> Expression ArgListPrime
+ArgListPrime -> , Expression ArgListPrime 
+ArgListPrime ->  EPSILON
